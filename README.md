@@ -152,27 +152,13 @@ docker-compose build --no-cache
 
 ## Why This Project
 
-I built SensorFlow to demonstrate practical data engineering concepts without the complexity of enterprise systems. It shows how to:
+I built SensorFlow to demonstrate practical data engineering concepts. To:
 
 - Handle time-series data at scale
 - Build REST APIs for data ingestion
 - Use Docker for service orchestration  
 - Create monitoring and visualization
 - Simulate realistic IoT scenarios
-
-The code is straightforward and well-documented, making it useful for learning or as a foundation for larger projects.
-
-## Extending the Platform
-
-Ready to add more features? Consider:
-
-- Connect real sensor hardware via GPIO or serial interfaces
-- Add authentication and user management
-- Implement alerting for anomaly detection
-- Scale with Kubernetes deployment
-- Add data retention policies
-- Create custom Grafana dashboards
-- Integrate machine learning models
 
 ## License
 
