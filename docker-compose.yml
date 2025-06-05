@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Apache Kafka for streaming
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: sensorflow-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: sensorflow-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    ports:
+      - "9092:9092"
+
+  # InfluxDB for time-series data
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: sensorflow-influxdb
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password123
+      - DOCKER_INFLUXDB_INIT_ORG=sensorflow
+      - DOCKER_INFLUXDB_INIT_BUCKET=sensors
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: sensorflow-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  # SensorFlow API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sensorflow-api
+    depends_on:
+      - kafka
+      - influxdb
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_TOKEN=my-super-secret-auth-token
+      - INFLUXDB_ORG=sensorflow
+      - INFLUXDB_BUCKET=sensors
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+
+volumes:
+  influxdb_data:
+  grafana_data:
