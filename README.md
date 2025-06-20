@@ -19,6 +19,14 @@ cd SensorFlow
 docker-compose up -d
 ```
 
+Set the `DATABASE_URL` environment variable to point to your PostgreSQL instance. Example:
+
+```bash
+export DATABASE_URL=postgresql://sensorflow:password@localhost:5432/sensorflow
+```
+
+On startup the API will automatically create a `sensor_readings` table if it does not exist.
+
 **Access the interfaces:**
 - API docs: http://localhost:8000/docs
 - Grafana dashboards: http://localhost:3000 (admin/admin)
@@ -44,8 +52,11 @@ This generates sample data and shows you how the system works.
 - `GET /` - Basic API information
 - `GET /health` - Service health status
 - `GET /sensors` - List active sensors
-- `GET /readings` - Retrieve sensor data
+- `GET /readings` - List sensor data
 - `POST /readings` - Submit new readings
+- `GET /readings/{id}` - Retrieve a single reading
+- `PUT /readings/{id}` - Update a reading
+- `DELETE /readings/{id}` - Delete a reading
 - `POST /simulate` - Generate test data
 - `GET /stats` - System statistics
 
@@ -82,6 +93,7 @@ Data flows from simulated sensors through the API into InfluxDB for storage. Gra
 ```bash
 pip install -r requirements.txt
 cd src
+export DATABASE_URL=postgresql://sensorflow:password@localhost:5432/sensorflow
 uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
@@ -124,6 +136,23 @@ curl http://localhost:8000/sensors
 **Generate sample data:**
 ```bash
 curl -X POST http://localhost:8000/simulate?count=100
+```
+
+**Read a specific entry:**
+```bash
+curl http://localhost:8000/readings/1
+```
+
+**Update an entry:**
+```bash
+curl -X PUT -H "Content-Type: application/json" \
+     -d '{"sensor_id":"temp_sensor_01","sensor_type":"temperature","value":22.5,"unit":"°C","timestamp":"2024-01-01T00:00:00","location":"Floor 1"}' \
+     http://localhost:8000/readings/1
+```
+
+**Delete an entry:**
+```bash
+curl -X DELETE http://localhost:8000/readings/1
 ```
 
 **View statistics:**

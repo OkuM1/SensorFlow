@@ -24,3 +24,4 @@ faker==20.1.0
 
 # Async Support
 aiohttp==3.9.1
+asyncpg==0.29.0
