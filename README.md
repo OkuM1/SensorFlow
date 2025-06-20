@@ -8,6 +8,24 @@ SensorFlow simulates industrial IoT sensors and processes their data through a c
 
 The platform generates realistic sensor readings for temperature, pressure, vibration, and humidity from multiple factory locations, then stores and visualizes this data using industry-standard tools.
 
+## Architecture
+
+```
+Sensor Simulator → FastAPI (PostgreSQL) → Grafana
+                      ↓
+                FastAPI (Kafka/InfluxDB/Redis)
+                      ↓
+                   InfluxDB
+```
+
+- **Sensor Simulator**: Generates realistic industrial sensor data and sends it to Kafka.
+- **FastAPI (PostgreSQL)**: REST API for CRUD operations on sensor readings, backed by PostgreSQL.
+- **FastAPI (Kafka/InfluxDB/Redis)**: Advanced API for streaming, analytics, and time-series storage.
+- **InfluxDB**: Stores time-series sensor data for analytics and visualization.
+- **Grafana**: Visualizes sensor data from InfluxDB.
+- **Kafka**: Message queue for real-time data ingestion and streaming.
+- **PostgreSQL**: Relational database for persistent sensor readings (used by the main API).
+
 ## Getting Started
 
 You need Docker and Docker Compose installed on your system.
@@ -16,40 +34,32 @@ You need Docker and Docker Compose installed on your system.
 ```bash
 git clone https://github.com/yourusername/SensorFlow.git
 cd SensorFlow
-# Start services with either Docker Compose v2 or the legacy tool
-docker compose up -d   # or `docker-compose up -d`
+docker-compose up -d
 ```
-
-Set the `DATABASE_URL` environment variable to point to your PostgreSQL instance. Example:
-
-```bash
-export DATABASE_URL=postgresql://sensorflow:password@localhost:5432/sensorflow
-```
-
-On startup the API will automatically create a `sensor_readings` table if it does not exist.
 
 **Access the interfaces:**
 - API docs: http://localhost:8000/docs
 - Grafana dashboards: http://localhost:3000 (admin/admin)
 - InfluxDB interface: http://localhost:8086 (admin/password123)
 
-**Run the demo:**
+**Run the sensor simulator:**
+```bash
+python3 src/data_generators/sensor_simulator.py --rate 10 --duration 10
+```
+
+**Run the demo script:**
 ```bash
 python3 demo_script.py
 ```
 
-This generates sample data and shows you how the system works.
+## Database Configuration
 
-## What's Inside
+- **PostgreSQL**: Used by the main FastAPI app (`src/api/main.py`).
+  - Connection string: `postgresql://sensorflow:password@localhost:5432/sensorflow`
+  - Data is persisted in the Docker volume `postgres_data`.
+- **InfluxDB**: Used for time-series data and analytics by the advanced API (`src/api/api_server.py`).
 
-**Core Components:**
-- FastAPI service for data ingestion and retrieval
-- InfluxDB for time-series data storage  
-- Grafana for data visualization
-- Apache Kafka for message streaming
-- Python scripts that simulate IoT sensors
-
-**API Endpoints:**
+## API Endpoints (PostgreSQL-backed API)
 - `GET /` - Basic API information
 - `GET /health` - Service health status
 - `GET /sensors` - List active sensors
@@ -61,6 +71,14 @@ This generates sample data and shows you how the system works.
 - `POST /simulate` - Generate test data
 - `GET /stats` - System statistics
 
+## API Endpoints (Kafka/InfluxDB/Redis-backed API)
+- `GET /sensors` - List all sensors
+- `POST /readings` - Ingest a new reading
+- `GET /readings/{sensor_id}` - Get historical readings
+- `GET /anomalies` - List anomaly alerts
+- `POST /aggregations` - Get aggregated data
+- `GET /stream` - Real-time event stream
+
 ## Example Data
 
 The sensor simulator creates data that looks like real industrial equipment:
@@ -70,42 +88,10 @@ The sensor simulator creates data that looks like real industrial equipment:
   "sensor_id": "TEMP_001", 
   "sensor_type": "temperature",
   "value": 23.4,
-  "unit": "celsius",
+  "unit": "°C",
   "location": "Factory_Floor_A",
   "timestamp": "2024-01-15T10:30:00Z"
 }
-```
-
-Sensor types include temperature (15-50°C), pressure (1-5 bar), vibration (0-2 m/s²), and humidity (20-80%).
-
-## Architecture
-
-```
-Sensor Simulator → FastAPI → InfluxDB → Grafana
-                      ↓
-                   Kafka Queue
-```
-
-Data flows from simulated sensors through the API into InfluxDB for storage. Grafana reads from InfluxDB to create dashboards. Kafka handles message queuing for reliable data processing.
-
-## Development
-
-**Run locally:**
-```bash
-pip install -r requirements.txt
-cd src
-export DATABASE_URL=postgresql://sensorflow:password@localhost:5432/sensorflow
-uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-**Generate test data:**
-```bash
-python3 src/data_generator.py
-```
-
-**Check system status:**
-```bash
-./status.sh
 ```
 
 ## Project Structure
@@ -113,13 +99,17 @@ python3 src/data_generator.py
 ```
 SensorFlow/
 ├── src/
-│   ├── api/main.py         # REST API server
-│   └── data_generator.py   # Sensor simulation
-├── docker-compose.yml      # Service definitions  
-├── Dockerfile             # API container
-├── requirements.txt       # Python packages
-├── demo_script.py        # Demo automation
-└── status.sh            # Health monitoring
+│   ├── api/main.py               # REST API (PostgreSQL)
+│   ├── api/api_server.py         # Advanced API (Kafka/InfluxDB/Redis)
+│   ├── data_generators/sensor_simulator.py  # Sensor simulation
+│   ├── ml_models/anomaly_detection.py       # ML anomaly detection
+│   └── processing/spark_streaming.py        # Spark streaming processor
+├── docker-compose.yml            # Service definitions  
+├── Dockerfile                    # API container
+├── requirements.txt              # Python packages
+├── demo_script.py                # Demo automation
+├── status.sh                     # Health monitoring
+└── dashboards/                   # Grafana dashboards and provisioning
 ```
 
 ## Testing the System
@@ -165,25 +155,20 @@ curl http://localhost:8000/stats
 
 ```bash
 # Start services
-docker compose up -d   # or `docker-compose up -d`
-
+docker-compose up -d
 # View logs
-docker compose logs -f   # or `docker-compose logs -f`
-
+docker-compose logs -f
 # Stop services
-docker compose down   # or `docker-compose down`
-
+docker-compose down
 # Clean up data
-docker compose down -v   # or `docker-compose down -v`
-
+docker-compose down -v
 # Rebuild containers
-docker compose build --no-cache   # or `docker-compose build --no-cache`
+docker-compose build --no-cache
 ```
 
 ## Why This Project
 
-I built SensorFlow to demonstrate practical data engineering concepts. To:
-
+SensorFlow demonstrates practical data engineering concepts:
 - Handle time-series data at scale
 - Build REST APIs for data ingestion
 - Use Docker for service orchestration  

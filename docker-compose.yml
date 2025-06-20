@@ -42,6 +42,19 @@ services:
     volumes:
       - influxdb_data:/var/lib/influxdb2
 
+  # PostgreSQL for API
+  postgres:
+    image: postgres:15-alpine
+    container_name: sensorflow-postgres
+    environment:
+      POSTGRES_USER: sensorflow
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: sensorflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   # Grafana for dashboards
   grafana:
     image: grafana/grafana:10.0.0
@@ -63,17 +76,22 @@ services:
     depends_on:
       - kafka
       - influxdb
+      - postgres
     environment:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       - INFLUXDB_URL=http://influxdb:8086
       - INFLUXDB_TOKEN=my-super-secret-auth-token
       - INFLUXDB_ORG=sensorflow
       - INFLUXDB_BUCKET=sensors
+      - DATABASE_URL=postgresql://sensorflow:password@postgres:5432/sensorflow
     ports:
       - "8000:8000"
     volumes:
       - ./src:/app/src
+      - ./scripts/wait-for-postgres.sh:/wait-for-postgres.sh
+    entrypoint: ["/bin/sh", "/wait-for-postgres.sh", "postgres", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 volumes:
   influxdb_data:
   grafana_data:
+  postgres_data:

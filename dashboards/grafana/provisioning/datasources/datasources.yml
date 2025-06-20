@@ -1,0 +1,28 @@
+# Grafana datasource provisioning for SensorFlow
+
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    database: sensors
+    user: admin
+    password: sensorflow123
+    jsonData:
+      version: Flux
+      organization: sensorflow
+      defaultBucket: sensors
+      tlsSkipVerify: true
+    secureJsonData:
+      token: sensorflow-super-secret-token
+    isDefault: true
+    editable: true
+
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: false
+    editable: true

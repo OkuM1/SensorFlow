@@ -3,7 +3,6 @@ SensorFlow Data Generator - Simulates IoT Sensor Data
 """
 import random
 import time
-import json
 import requests
 from datetime import datetime
 from faker import Faker
@@ -122,14 +121,11 @@ def main():
     # Generate some initial data
     logger.info("Generating initial sensor data...")
     for sensor_type in generator.sensor_configs.keys():
-        for i in range(3):  # 3 readings per sensor type
+        for _ in range(3):  # 3 readings per sensor type
             reading = generator.generate_reading(sensor_type)
             generator.send_reading(reading)
     
     logger.info("Initial data generation complete")
-    
-    # Optionally run continuous simulation
-    # generator.run_simulation(duration_minutes=5)
 
 if __name__ == "__main__":
     main()
