@@ -16,7 +16,8 @@ You need Docker and Docker Compose installed on your system.
 ```bash
 git clone https://github.com/yourusername/SensorFlow.git
 cd SensorFlow
-docker-compose up -d
+# Start services with either Docker Compose v2 or the legacy tool
+docker compose up -d   # or `docker-compose up -d`
 ```
 
 Set the `DATABASE_URL` environment variable to point to your PostgreSQL instance. Example:
@@ -164,19 +165,19 @@ curl http://localhost:8000/stats
 
 ```bash
 # Start services
-docker-compose up -d
+docker compose up -d   # or `docker-compose up -d`
 
 # View logs
-docker-compose logs -f
+docker compose logs -f   # or `docker-compose logs -f`
 
-# Stop services  
-docker-compose down
+# Stop services
+docker compose down   # or `docker-compose down`
 
 # Clean up data
-docker-compose down -v
+docker compose down -v   # or `docker-compose down -v`
 
 # Rebuild containers
-docker-compose build --no-cache
+docker compose build --no-cache   # or `docker-compose build --no-cache`
 ```
 
 ## Why This Project

@@ -4,9 +4,19 @@
 echo "🔍 SensorFlow System Status"
 echo "=========================="
 
+# Determine which Docker Compose command is available
+if command -v docker-compose >/dev/null 2>&1; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version >/dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    echo "Docker Compose is not installed." >&2
+    exit 1
+fi
+
 # Check Docker containers
 echo "📦 Docker Containers:"
-docker-compose ps
+$DOCKER_COMPOSE ps
 
 echo ""
 echo "🌐 Service Health Checks:"
